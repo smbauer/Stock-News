@@ -73,7 +73,8 @@ else:
 for article in news_data:
     headline = article["title"]
     description = article["description"]
-    body = f"{STOCK}:{indicator}{price_diff:.2f}%\nHeadline: {headline}\nBrief: {description}"
+    article_url = article["url"]
+    body = f"{STOCK}:{indicator}{price_diff:.2f}%\nHeadline: {headline}\nBrief: {description}\nLink: {article_url}"
 
     print("Sending message...")
 
