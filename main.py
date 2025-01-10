@@ -1,5 +1,4 @@
 import requests
-import json
 import os
 from dotenv import load_dotenv
 from twilio.rest import Client
@@ -8,9 +7,10 @@ from twilio.rest import Client
 load_dotenv()
 
 # stock params
-STOCK = "TSLA"
+STOCK = "TVGN"
 STOCK_ENDPOINT = "https://www.alphavantage.co/query"
 STOCK_API_KEY = os.getenv("STOCK_API_KEY")
+PRICE_THRESHOLD = 5
 
 stock_params = {
     "function": "TIME_SERIES_DAILY",
@@ -19,7 +19,7 @@ stock_params = {
 }
 
 # news params
-COMPANY_NAME = "Tesla Inc"
+COMPANY_NAME = "Tevogen Bio Holdings Inc"
 NEWS_ENDPOINT = "https://newsapi.org/v2/everything"
 NEWS_API_KEY = os.getenv("NEWS_API_KEY")
 
@@ -37,32 +37,24 @@ WHATSAPP_TO = os.getenv("WHATSAPP_TO")
 ## STEP 1: Use https://www.alphavantage.co/query
 # When STOCK price increase/decreases by 5% between yesterday and the day before yesterday then print("Get News").
 
-try:
-    # read data if file exists
-    with open("data.json", "r") as f:
-        data = json.load(f)
-except FileNotFoundError:
-    # otherwise create new file and add data
-    print("Getting stock prices...")
-    response = requests.get(url=STOCK_ENDPOINT, params=stock_params)
-    response.raise_for_status()
-    data = response.json()["Time Series (Daily)"]
+print("Getting stock prices...")
 
-    with open("data.json", "w") as f:
-        json.dump(data, f, indent=4)
+stock_response = requests.get(url=STOCK_ENDPOINT, params=stock_params)
+stock_response.raise_for_status()
+stock_data = stock_response.json()["Time Series (Daily)"]
 
-date_yesterday = list(data.keys())[0]
-date_previous = list(data.keys())[1]
+date_yesterday = list(stock_data.keys())[0]
+date_previous = list(stock_data.keys())[1]
 
-price_yesterday = float(data[date_yesterday]["4. close"])
-price_previous = float(data[date_previous]["4. close"])
+price_yesterday = float(stock_data[date_yesterday]["4. close"])
+price_previous = float(stock_data[date_previous]["4. close"])
 
 price_diff = (price_yesterday - price_previous) / price_previous * 100
 
 ## STEP 2: Use https://newsapi.org/docs/endpoints/everything
 # Instead of printing ("Get News"), actually fetch the first 3 articles for the COMPANY_NAME. 
 
-if abs(price_diff) > 4:
+if abs(price_diff) > PRICE_THRESHOLD:
     print("Getting news...")
     news_response = requests.get(url=NEWS_ENDPOINT, params=news_params)
     news_response.raise_for_status()
@@ -84,7 +76,7 @@ for article in news_data:
     body = f"{STOCK}:{indicator}{price_diff:.2f}%\nHeadline: {headline}\nBrief: {description}"
 
     print("Sending message...")
-    
+
     message = twilio_client.messages.create(
         from_=WHATSAPP_FROM,
         to=WHATSAPP_TO,
