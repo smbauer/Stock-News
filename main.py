@@ -60,31 +60,31 @@ if abs(price_diff) > PRICE_THRESHOLD:
     news_response.raise_for_status()
     news_data = news_response.json()["articles"][:3]
 
-## STEP 3: Use twilio.com/docs/sms/quickstart/python
-# Send a separate message with each article's title and description to your phone number. 
+    ## STEP 3: Use twilio.com/docs/sms/quickstart/python
+    # Send a separate message with each article's title and description to your phone number. 
 
-twilio_client = Client(TWILIO_ACCOUNT_SID, TWILIO_TOKEN)
+    twilio_client = Client(TWILIO_ACCOUNT_SID, TWILIO_TOKEN)
 
-if price_diff > 0:
-    indicator = "🔺"
-else:
-    indicator = "🔻"
+    if price_diff > 0:
+        indicator = "🔺"
+    else:
+        indicator = "🔻"
 
-for article in news_data:
-    headline = article["title"]
-    description = article["description"]
-    article_url = article["url"]
-    body = f"{STOCK}:{indicator}{price_diff:.2f}%\nHeadline: {headline}\nBrief: {description}\nLink: {article_url}"
+    for article in news_data:
+        headline = article["title"]
+        description = article["description"]
+        article_url = article["url"]
+        body = f"{STOCK}:{indicator}{price_diff:.2f}%\nHeadline: {headline}\nBrief: {description}\nLink: {article_url}"
 
-    print("Sending message...")
+        print("Sending message...")
 
-    message = twilio_client.messages.create(
-        from_=WHATSAPP_FROM,
-        to=WHATSAPP_TO,
-        body=body
-    )
+        message = twilio_client.messages.create(
+            from_=WHATSAPP_FROM,
+            to=WHATSAPP_TO,
+            body=body
+        )
 
-    print(f"Message Status: {message.status}")
+        print(f"Message Status: {message.status}")
 
 
 #Optional: Format the SMS message like this: 
